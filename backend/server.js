@@ -34,7 +34,9 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   next();
 });
-
+app.get("/", (req, res) => {
+  res.send("MatchCV API is running successfully!");
+});
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
