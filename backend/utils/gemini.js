@@ -16,8 +16,8 @@ const isMissing = (err) => /\b404\b/.test(text(err));
 const isRetryable = (err) =>
   /\b(429|500|502|503|504)\b/.test(text(err)) || /overloaded|high demand|unavailable|quota/i.test(text(err));
 // "fetch failed" and friends mean this computer could not reach Google at all (internet, DNS, firewall).
-const isNetwork = (err) => /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ENETUNREACH|socket hang up|timed out|timeout/i.test(text(err));
-
+//const isNetwork = (err) => /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ENETUNREACH|socket hang up|timed out|timeout/i.test(text(err));
+const isNetwork = (err) => /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ENETUNREACH|socket hang up|timed out|timeout|aborted|abort/i.test(text(err));
 async function generate(parts, { json = false, temperature = 0.2 } = {}) {
   let lastErr;
   let netFails = 0;
@@ -29,7 +29,7 @@ async function generate(parts, { json = false, temperature = 0.2 } = {}) {
             model: name,
             generationConfig: { temperature, ...(json ? { responseMimeType: 'application/json' } : {}) },
           },
-          { timeout: 45000 } // never wait more than 45 seconds for one answer
+          { timeout: 120000 } // never wait more than 120 seconds for one answer
         );
         const result = await model.generateContent(parts);
         return result.response.text();
@@ -38,9 +38,10 @@ async function generate(parts, { json = false, temperature = 0.2 } = {}) {
         if (isNetwork(err)) {
           // Another model will not help when Google cannot be reached. Try once more, then stop.
           netFails += 1;
-          if (netFails >= 2) throw err;
+          if (netFails >= 4) throw err;
           await sleep(1500);
-          continue;
+          //continue;
+          break;
         }
         if (isMissing(err)) break; // this model name does not exist -> next model
         if (!isRetryable(err)) throw err; // bad key etc. -> stop right away
