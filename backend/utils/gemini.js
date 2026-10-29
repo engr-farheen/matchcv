@@ -29,7 +29,7 @@ async function generate(parts, { json = false, temperature = 0.2 } = {}) {
             model: name,
             generationConfig: { temperature, ...(json ? { responseMimeType: 'application/json' } : {}) },
           },
-          { timeout: 120000 } // never wait more than 120 seconds for one answer
+          { timeout: 45000 } // never wait more than 45 seconds for one answer
         );
         const result = await model.generateContent(parts);
         return result.response.text();
